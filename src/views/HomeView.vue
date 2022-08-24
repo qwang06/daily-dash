@@ -1,25 +1,22 @@
 <template>
-	<div></div>
+	<v-container>
+		<v-row>
+			<v-col>
+				<interval-timer />
+			</v-col>
+			<v-col>
+				<interval-timer />
+			</v-col>
+		</v-row>
+	</v-container>
 </template>
 
 <script>
-import axios from 'axios';
-const baseURL = 'http://localhost:3691/'; // TODO: update for prod
+import IntervalTimer from '@/components/IntervalTimer';
 export default {
 	name: 'Home',
 	components: {
-	},
-	created() {
-		axios.request({
-			baseURL,
-			method: 'get',
-			url: '/',
-			withCredentials: true
-		}).then(response => {
-			console.log('response', response);
-		}).catch(err => {
-			console.log('err', err);
-		});
+		IntervalTimer
 	}
 }
 </script>

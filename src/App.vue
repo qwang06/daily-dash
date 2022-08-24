@@ -1,10 +1,6 @@
 <template>
 	<v-app>
-		<v-app-bar
-			app
-			color="primary"
-			dark
-		>
+		<v-app-bar app color="secondary" dark>
 			<div class="d-flex align-center">
 				<v-img
 					alt="Daily Dash Logo"
@@ -14,9 +10,11 @@
 					transition="scale-transition"
 					width="40"
 				/>
-
-				<h2>Daily Dash</h2>
-				<v-btn color="primary" @click="logout">Log Out</v-btn>
+				<h2 class="primary--text">Daily Dash</h2>
+			</div>
+			<v-spacer />
+			<div class="d-flex">
+				<v-btn color="primary" text @click="logout">Log Out</v-btn>
 			</div>
 		</v-app-bar>
 
@@ -30,8 +28,6 @@
 import router from '@/router';
 export default {
 	name: 'App',
-	data: () => ({
-	}),
 	methods: {
 		logout() {
 			this.$store.dispatch('auth/userLogout', {

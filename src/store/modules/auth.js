@@ -1,6 +1,4 @@
-import axios from 'axios';
-
-const baseURL = 'http://localhost:3691/'; // TODO: update for prod
+import apiService from '@/utils/apiService';
 const state = {
 	loaded: false,
 	user: {},
@@ -24,75 +22,65 @@ const actions = {
 		commit('setStateLoaded');
 	},
 	userRegister({ commit }, { email, password, callback }) {
-		axios.request({
-			baseURL,
+		apiService.call({
 			method: 'POST',
 			url: '/register',
 			data: {
 				email: email,
 				password: password
-			},
-			withCredentials: true
-		}).then(response => {
+			}
+		}, (err, response) => {
 			if (response.data.success) {
 				commit('setUser', { email: response.data.email });
 				commit('setIsAuthenticated', true);
+				return callback(null, response);
+			} else {
+				return callback(err || new Error('Registration failed.'));
 			}
-			return callback(null, response);
-		}).catch(err => {
-			return callback(err);
 		});
 	},
 	userLogin({ commit }, { email, password, callback }) {
-		axios.request({
-			baseURL,
+		apiService.call({
 			method: 'POST',
 			url: '/login',
 			data: {
 				email: email,
 				password: password
-			},
-			withCredentials: true
-		}).then(response => {
+			}
+		}, (err, response) => {
 			if (response.data.success) {
 				commit('setUser', { email: response.data.email });
 				commit('setIsAuthenticated', true);
+				return callback(null, response);
+			} else {
+				return callback(err || new Error('Login failed.'));
 			}
-			return callback(null, response);
-		}).catch(err => {
-			return callback(err);
 		});
 	},
 	userLogout({ commit }, { callback }) {
-		axios.request({
-			baseURL,
+		apiService.call({
 			method: 'POST',
-			url: '/logout',
-			withCredentials: true
-		}).then(response => {
+			url: '/logout'
+		}, (err, response) => {
+			if (err) return callback(err);
+
 			commit('setUser', {});
 			commit('setIsAuthenticated', false);
 			return callback(null, response);
-		}).catch(err => {
-			return callback(err);
 		});
 	},
 	userLoad({ commit }, { email, password, callback }) {
-		axios.request({
-			baseURL,
+		apiService.call({
 			method: 'GET',
-			url: '/auth',
-			withCredentials: true
-		}).then(response => {
+			url: '/auth'
+		}, (err, response) => {
 			if (response.data.success) {
 				commit('setUser', { email: response.data.email });
 				commit('setIsAuthenticated', true);
 				return callback();
 			} else {
-				return callback(new Error('Unable to authenticate user.'));
+				return callback(err || new Error('Unable to authenticate user.'));
 			}
-		}).catch(err => {
-			return callback(err);
 		});
 	}
 }
