@@ -67,7 +67,7 @@ export default {
 							this.errorState = true;
 							this.errorMessage = err.response.data.message;
 						} else {
-							router.push('/');
+							window.location.href = '/login';
 						}
 					}
 				});

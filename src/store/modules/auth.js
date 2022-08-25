@@ -1,4 +1,5 @@
 import apiService from '@/utils/apiService';
+import store from '@/store';
 const state = {
 	loaded: false,
 	user: {},
@@ -30,7 +31,7 @@ const actions = {
 				password: password
 			}
 		}, (err, response) => {
-			if (response.data.success) {
+			if (response?.data?.success) {
 				commit('setUser', { email: response.data.email });
 				commit('setIsAuthenticated', true);
 				return callback(null, response);
@@ -48,8 +49,9 @@ const actions = {
 				password: password
 			}
 		}, (err, response) => {
-			if (response.data.success) {
-				commit('setUser', { email: response.data.email });
+			if (response?.data?.success) {
+				store.dispatch('app/applyUserPrefs', response.data.user.userPrefs);
+				commit('setUser', response.data.user);
 				commit('setIsAuthenticated', true);
 				return callback(null, response);
 			} else {
@@ -74,8 +76,9 @@ const actions = {
 			method: 'GET',
 			url: '/auth'
 		}, (err, response) => {
-			if (response.data.success) {
-				commit('setUser', { email: response.data.email });
+			if (response?.data?.success) {
+				store.dispatch('app/applyUserPrefs', response.data.user.userPrefs);
+				commit('setUser', response.data.user);
 				commit('setIsAuthenticated', true);
 				return callback();
 			} else {

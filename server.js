@@ -1,14 +1,18 @@
 const app = require('express')();
+const axios = require('axios');
 const bodyParser = require('body-parser');
 const session = require('express-session');
 const cors = require('cors');
 const connectStore = require('connect-pg-simple');
+const RssParser = require('rss-parser');
 const db = require('./db');
 const config = require('./config');
 const User = require('./src/models/User');
+
+const PORT = 3691;
 const env = process.env.NODE_ENV || 'development';
 const uiBase = 'http://localhost:8080/';
-const PORT = 3691;
+const rssParser = new RssParser();
 
 const authenticateUser = (req, res, next) => {
 	if (req.session.user) return next();
@@ -58,7 +62,6 @@ db.init(err => {
 			secure: config.env === 'development' ? false : true
 		}
 	}));
-	// app.use(basicAuth);
 
 	if (env === 'development') {
 		app.use(cors({
@@ -74,7 +77,7 @@ db.init(err => {
 		});
 		newUser.create(err => {
 			if (err) return res.status(400).json({ success: false, message: err.toString() });
-			req.session.user = { email: req.body.email };
+			req.session.user = newUser;
 			return res.json({ success: true });
 		});
 	});
@@ -84,13 +87,14 @@ db.init(err => {
 			email: req.body.email,
 			password: req.body.password
 		});
-		loginUser.authenticate(err => {
+		loginUser.authenticate((err, user) => {
 			if (err) {
 				console.error('User login error', err);
 				return res.status(400).json({ success: false, message: err.toString() });
 			}
-			req.session.user = { email: req.body.email };
-			return res.json({ success: true, email: req.body.email });
+			req.session.user = user;
+			console.log('user', user);
+			return res.json({ success: true, user });
 		});
 	});
 
@@ -99,19 +103,32 @@ db.init(err => {
 		return res.json({ success: true });
 	});
 
+	// All routes after this will require authentication
 	app.use(authenticateUser);
 
 	app.get('/auth', (req, res) => {
-		return res.json({ success: true, email: req.session.user.email });
+		return res.json({ success: true, user: req.session.user });
 	});
 
-	app.get('/', (req, res) => {
-		db.query('SELECT $1 AS testCol, NOW()', ['test'], (err, results) => {
-			if (err) {
-				console.error('exec error', err);
-			}
+	app.get('/rss', (req, res) => {
+		rssParser.parseURL(req.query.rssFeedURL)
+			.then(response => {
+				return res.json(response);
+			})
+			.catch(err => {
+				return res.status(400).json({ success: false, message: err.toString() });
+			});
+	});
 
-			return res.send('Hello World!');
+	app.put('/userPrefs', (req, res) => {
+		const user = new User(req.session.user);
+		user.updateUserPrefs(req.body, (err, results) => {
+			if (err) {
+				return res.status(400).json({ success: false, message: err.toString() });
+			} else {
+				req.session.user = user;
+				return res.json({ success: true, user });
+			}
 		});
 	});
 

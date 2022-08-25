@@ -1,6 +1,6 @@
 <template>
 	<v-card>
-		<v-toolbar color="primary">
+		<v-toolbar color="primary" dark>
 			<v-card-title>Interval Timer</v-card-title>
 		</v-toolbar>
 		<v-card-text>
@@ -9,7 +9,6 @@
 					<v-autocomplete
 						v-model="selectedInterval"
 						:items="presetIntervals"
-						color="secondary"
 						hide-no-data
 						hide-selected
 						label="Preset Intervals"
@@ -25,7 +24,6 @@
 						label="Number of"
 						suffix="rounds"
 						type="number"
-						color="secondary"
 					></v-text-field>
 				</v-col>
 				<v-col>
@@ -34,7 +32,6 @@
 						label="Rest Time"
 						suffix="seconds"
 						type="number"
-						color="secondary"
 					></v-text-field>
 				</v-col>
 				<v-col>
@@ -43,7 +40,6 @@
 						label="Work Time"
 						suffix="seconds"
 						type="number"
-						color="secondary"
 					></v-text-field>
 				</v-col>
 			</v-row>
@@ -69,23 +65,32 @@
 </template>
 
 <script>
-import apiService from '@/utils/apiService';
 export default {
 	name: 'IntervalTimer',
+	created() {
+		this.countdownSound = new Audio(require('../assets/simple-countdown.wav'));
+		this.restSound = new Audio(require('../assets/achievement-bell.wav'));
+		this.workSound = new Audio(require('../assets/success.wav'));
+		this.countdownSound.volume = 0.3;
+		this.restSound.volume = 0.3;
+		this.workSound.volume = 0.3;
+	},
 	data: () => ({
 		time: '00:00:00.000',
 		timeStart: null,
 		timeStop: null,
 		timerInterval: null,
 		roundStartingInterval: null,
-		search: null,
+		countdownSound: null,
+		restSound: null,
+		workSound: null,
 		isRunning: false,
 		isLoading: false,
 		stoppedDuration: 0,
 		round: 1,
-		numberOfRounds: 1,
-		restTime: 2,
-		workTime: 4,
+		numberOfRounds: 10,
+		restTime: 20,
+		workTime: 40,
 		countdownTimer: 3,
 		currentPeriod: 'Work',
 		selectedInterval: '',
@@ -98,6 +103,7 @@ export default {
 				this.stoppedDuration += (new Date() - this.timeStop);
 			}
 			if (this.countdownTimer) {
+				this.countdownSound.play();
 				this.currentPeriod = 'starting in ' + this.countdownTimer;
 				this.roundStartingInterval = setInterval(this.startCountdown.bind(this), 1000);
 			} else {
@@ -136,12 +142,14 @@ export default {
 			const sec = String(timeElapsed.getUTCSeconds()).padStart(2, '0');
 			const ms = String(timeElapsed.getUTCMilliseconds()).padStart(3, '0');
 
-			if (this.currentPeriod === 'Work' && timeElapsedMs > this.workTime*1000) {
+			if (this.restTime && this.currentPeriod === 'Work' && timeElapsedMs > this.workTime*1000) {
 				this.currentPeriod = 'Rest';
+				this.restSound.play();
 				this.resetTimer();
 				this.startTimer();
-			} else if (this.currentPeriod === 'Rest' && timeElapsedMs > this.restTime*1000) {
+			} else if (this.workTime && this.currentPeriod === 'Rest' && timeElapsedMs > this.restTime*1000) {
 				this.currentPeriod = 'Work';
+				this.workSound.play();
 				this.round++;
 				this.resetTimer();
 				this.startTimer();
@@ -179,8 +187,6 @@ export default {
 				this.restTime = 30;
 			}
 		}
-	},
-	created() {
 	}
 }
 </script>

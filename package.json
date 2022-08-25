@@ -16,6 +16,7 @@
     "express": "^4.18.1",
     "express-session": "^1.17.3",
     "pg": "^8.7.3",
+    "rss-parser": "^3.12.0",
     "to-series": "^0.0.6",
     "vue": "^2.6.14",
     "vue-router": "^3.5.1",
