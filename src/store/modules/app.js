@@ -4,6 +4,8 @@ const state = {
 	loaded: false,
 	errorState: false,
 	errorMessage: '',
+	successState: false,
+	successMessage: '',
 	userPrefs: {}
 }
 
@@ -33,17 +35,16 @@ const actions = {
 		commit('setSuccessState', successState);
 	},
 	applyUserPrefs({ commit }, userPrefs) {
-		console.log('userPrefs', userPrefs);
 		commit('setUserPrefs', userPrefs);
 	},
 	updateUserPrefs({ commit }, { userPrefs, callback }) {
 		apiService.call({
 			method: 'PUT',
 			url: '/userPrefs',
-			data: userPrefs
+			data: userPrefs || state.userPrefs
 		}, (err, response) => {
 			if (response?.data?.success) {
-				commit('setUserPrefs', userPrefs);
+				commit('setUserPrefs', userPrefs || state.userPrefs);
 				return callback(null, response);
 			} else {
 				commit('setErrorState', err || new Error('Failed to get user preferences.'));
@@ -73,6 +74,7 @@ const mutations = {
 		state.successMessage = '';
 	},
 	setSuccessState(state, payload) {
+		console.log('successState', payload);
 		state.successState = true;
 		state.successMessage = payload || 'Success';
 	}

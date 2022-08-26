@@ -1,49 +1,40 @@
 <template>
-	<v-card>
-		<v-toolbar color="primary" dark>
-			<v-card-title>Interval Timer</v-card-title>
-		</v-toolbar>
+	<div>
+		<dashboard-component-toolbar
+			title="Interval Timer"
+			:config="config"
+		>
+			<template #options="{ data }">
+				<v-row>
+					<v-col>
+						<v-text-field
+							v-model="data.numberOfRounds"
+							label="Number of"
+							suffix="rounds"
+							type="number"
+						></v-text-field>
+					</v-col>
+					<v-col>
+						<v-text-field
+							v-model="data.restTime"
+							label="Rest Time"
+							suffix="seconds"
+							type="number"
+						></v-text-field>
+					</v-col>
+					<v-col>
+						<v-text-field
+							v-model="data.workTime"
+							label="Work Time"
+							suffix="seconds"
+							type="number"
+						></v-text-field>
+					</v-col>
+				</v-row>
+			</template>
+		</dashboard-component-toolbar>
 		<v-card-text>
-			<v-row>
-				<v-col>
-					<v-autocomplete
-						v-model="selectedInterval"
-						:items="presetIntervals"
-						hide-no-data
-						hide-selected
-						label="Preset Intervals"
-						prepend-icon="mdi-magnify"
-						@change="setPresetInterval"
-					></v-autocomplete>
-				</v-col>
-			</v-row>
-			<v-row>
-				<v-col>
-					<v-text-field
-						v-model="numberOfRounds"
-						label="Number of"
-						suffix="rounds"
-						type="number"
-					></v-text-field>
-				</v-col>
-				<v-col>
-					<v-text-field
-						v-model="restTime"
-						label="Rest Time"
-						suffix="seconds"
-						type="number"
-					></v-text-field>
-				</v-col>
-				<v-col>
-					<v-text-field
-						v-model="workTime"
-						label="Work Time"
-						suffix="seconds"
-						type="number"
-					></v-text-field>
-				</v-col>
-			</v-row>
-			<v-row class="timer-text accent--text">
+			<v-row class="pt-5 timer-text accent--text">
 				<v-col>
 					Round {{round}}
 					<span class="px-5">{{currentPeriod}}</span>
@@ -61,12 +52,19 @@
 			<v-btn @click="resetTimer">Reset Time</v-btn>
 			<v-btn @click="resetRound">Reset Round</v-btn>
 		</v-card-actions>
-	</v-card>
+	</div>
 </template>
 
 <script>
+import DashboardComponentToolbar from './DashboardComponentToolbar';
 export default {
 	name: 'IntervalTimer',
+	props: {
+		config: Object
+	},
+	components: {
+		DashboardComponentToolbar
+	},
 	created() {
 		this.countdownSound = new Audio(require('../assets/simple-countdown.wav'));
 		this.restSound = new Audio(require('../assets/achievement-bell.wav'));
@@ -74,6 +72,10 @@ export default {
 		this.countdownSound.volume = 0.3;
 		this.restSound.volume = 0.3;
 		this.workSound.volume = 0.3;
+
+		if (this.config.numberOfRounds == undefined) this.config.numberOfRounds = 10;
+		if (this.config.restTime == undefined) this.config.restTime = 20;
+		if (this.config.workTime == undefined) this.config.workTime = 40;
 	},
 	data: () => ({
 		time: '00:00:00.000',
@@ -88,9 +90,6 @@ export default {
 		isLoading: false,
 		stoppedDuration: 0,
 		round: 1,
-		numberOfRounds: 10,
-		restTime: 20,
-		workTime: 40,
 		countdownTimer: 3,
 		currentPeriod: 'Work',
 		selectedInterval: '',
@@ -173,18 +172,19 @@ export default {
 			}
 		},
 		setPresetInterval(preset) {
+			console.log('preset', preset);
 			if (preset === 'TABATA') {
-				this.numberOfRounds = 8;
-				this.workTime = 20;
-				this.restTime = 10;
+				this.config.numberOfRounds = 8;
+				this.config.workTime = 20;
+				this.config.restTime = 10;
 			} else if (preset === 'EMOM') {
-				this.numberOfRounds = 10;
-				this.workTime = 60;
-				this.restTime = 0;
+				this.config.numberOfRounds = 10;
+				this.config.workTime = 60;
+				this.config.restTime = 0;
 			} else if (preset === '9Round') {
-				this.numberOfRounds = 9;
-				this.workTime = 180;
-				this.restTime = 30;
+				this.config.numberOfRounds = 9;
+				this.config.workTime = 180;
+				this.config.restTime = 30;
 			}
 		}
 	}

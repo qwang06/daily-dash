@@ -1,14 +1,11 @@
 <template>
 	<v-container>
 		<v-row>
-			<v-col>
-				<interval-timer />
-			</v-col>
-			<v-col>
-				<div v-for="feed in rssFeeds">
-					<rss-feed :url="feed.url" />
-				</div>
-			</v-col>
+			<draggable tag="div" class="col" v-model="dashboardComponents">
+				<transition-group>
+					<dashboard-component v-for="config in dashboardComponents" :key="config.name" :config="config" />
+				</transition-group>
+			</draggable>
 		</v-row>
 		<v-dialog v-model="addComponentDialog" width="500" persistent>
 			<template v-slot:activator="{ on, attrs }">
@@ -32,17 +29,17 @@
 				<v-card-text>
 					<v-list>
 					    <v-list-item-group
-							v-model="dashboardComponentsSelected"
+							v-model="dashboardComponentTypesSelected"
 							multiple
 							active-class=""
 						>
-							<v-list-item v-for="item in dashboardComponents">
+							<v-list-item v-for="item in dashboardComponentTypes">
 								<template v-slot:default="{ active }">
 									<v-list-item-action>
 										<v-checkbox :input-value="active"></v-checkbox>
 									</v-list-item-action>
 									<v-list-item-content>
-										<v-list-item-title>{{item.title}}</v-list-item-title>
+										<v-list-item-title>{{item.type}}</v-list-item-title>
 										<v-list-item-subtitle>{{item.description}}</v-list-item-subtitle>
 									</v-list-item-content>
 								</template>
@@ -61,37 +58,59 @@
 </template>
 
 <script>
-import IntervalTimer from '@/components/IntervalTimer';
+import DashboardComponent from '@/components/DashboardComponent';
 import RssFeed from '@/components/RssFeed';
+import draggable from 'vuedraggable';
 export default {
 	name: 'Home',
 	components: {
-		IntervalTimer,
-		RssFeed
+		DashboardComponent,
+		RssFeed,
+		draggable
 	},
 	data() {
 		return {
 			addComponentDialog: false,
-			dashboardComponents: [{
-				title: 'Interval Timer',
+			dashboardComponentTypes: [{
+				type: 'Interval Timer',
 				description: 'Timer with customizable rounds, rest time, and work time.'
 			}, {
-				title: 'RSS Feed',
+				type: 'RSS Feed',
 				description: 'Fetch RSS Feed from given URL.'
 			}],
-			dashboardComponentsSelected: []
+			dashboardComponentTypesSelected: []
 		}
 	},
 	computed: {
+		dashboardComponents: {
+			get() {
+				return this.$store.state.app?.userPrefs?.dashboardComponents || [];
+			},
+			set(newValue) {
+				const userPrefs = this.$store.state.app?.userPrefs || {};
+				userPrefs.dashboardComponents = newValue;
+				this.$store.dispatch('app/applyUserPrefs', userPrefs);
+			}
+		},
 		rssFeeds() {
 			return this.$store.state.app?.userPrefs?.rssFeeds || [];
 		}
 	},
 	methods: {
 		addDashboardComponents() {
-			const selectedComponents = this.dashboardComponentsSelected.map(index => this.dashboardComponents[index]);
-			console.log('selectedComponents', selectedComponents);
+			if (!this.dashboardComponentTypesSelected.length) return;
+			const selectedComponentTypes = this.dashboardComponentTypesSelected.map(index => this.dashboardComponentTypes[index]);
+			const userPrefs = this.$store.state.app?.userPrefs || {};
+			selectedComponentTypes.forEach(componentType => {
+				this.dashboardComponents.push({
+					type: componentType.type,
+					name: componentType.type + ' ' + (this.dashboardComponents.length+1)
+				});
+			});
+			this.addComponentDialog = false;
 		}
+	},
+	mounted() {
 	}
 }
 </script>
@@ -99,5 +118,5 @@ export default {
 .add-dashboard-component-btn {
 	left: 20px;
 	top: 20px;
-}	
+}
 </style>

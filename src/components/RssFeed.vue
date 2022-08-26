@@ -7,21 +7,11 @@
 			<v-btn @click="deleteUserPref">Delete</v-btn>
 			<v-btn
 				icon
-				@click="showRssFeedURL = !showRssFeedURL"
+				@click="showOptions = !showOptions"
 			>
-				<v-icon>{{ showRssFeedURL ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+				<v-icon>{{ showOptions ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
 			</v-btn>
 		</v-toolbar>
-		<v-expand-transition>
-			<v-row class="pa-4" v-show="showRssFeedURL">
-				<v-col lg="10">
-					<v-text-field v-model="rssFeedURL" label="RSS Feed URL"></v-text-field>
-				</v-col>
-				<v-col lg="2">
-					<v-btn color="accent" @click="getRssFeed">Go</v-btn>
-				</v-col>
-			</v-row>
-		</v-expand-transition>
 		<v-card-text v-if="items.length">
 			<v-row>
 				<v-card elevation="0">
@@ -66,7 +56,7 @@ export default {
 	data() {
 		return {
 			isLoading: false,
-			showRssFeedURL: true,
+			showOptions: true,
 			numOfFeeds: 0,
 			rssFeedURL: this.url,
 			totalItems: [],
@@ -88,7 +78,7 @@ export default {
 			apiService.call(options, (err, response) => {
 				this.isLoading = false;
 				if (err) return this.$store.dispatch('app/applyErrorState', err);
-				this.showRssFeedURL = false;
+				this.showOptions = false;
 				this.totalItems = response.data.items;
 				this.title = response.data.title;
 				this.imageURL = response.data.image.url;
