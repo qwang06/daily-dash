@@ -3,7 +3,8 @@ import store from '@/store';
 const state = {
 	loaded: false,
 	user: {},
-	isAuthenticated: false
+	isAuthenticated: false,
+	isGoogleAuthenticated: false
 };
 
 const getters = {
@@ -13,6 +14,9 @@ const getters = {
 	isAuthenticated: () => {
 		return state.isAuthenticated;
 	},
+	isGoogleAuthenticated: () => {
+		return state.isGoogleAuthenticated;
+	},
 	currentUser: (state) => {
 		return state.user;
 	}
@@ -21,6 +25,10 @@ const getters = {
 const actions = {
 	setLoaded({ commit }) {
 		commit('setStateLoaded');
+	},
+	setIsGoogleAuthenticated({ commit }, isGoogleAuthenticated) {
+		console.log('isGoogleAuthenticated', isGoogleAuthenticated);
+		commit('setIsGoogleAuthenticated', isGoogleAuthenticated);
 	},
 	userRegister({ commit }, { email, password, callback }) {
 		apiService.call({
@@ -80,6 +88,8 @@ const actions = {
 				store.dispatch('app/applyUserPrefs', response.data.user.userPrefs);
 				commit('setUser', response.data.user);
 				commit('setIsAuthenticated', true);
+				console.log('response.data.user.userPrefs.googleCode', response.data.user.userPrefs.googleCode);
+				commit('setIsGoogleAuthenticated', !!response.data.user.userPrefs.googleCode);
 				return callback();
 			} else {
 				return callback(err || new Error('Unable to authenticate user.'));
@@ -97,6 +107,9 @@ const mutations = {
 	},
 	setIsAuthenticated(state, data) {
 		state.isAuthenticated = data;
+	},
+	setIsGoogleAuthenticated(state, data) {
+		state.isGoogleAuthenticated = data;
 	}
 }
 

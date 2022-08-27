@@ -1,9 +1,6 @@
 <template>
 	<div>
-		<dashboard-component-toolbar
-			title="Interval Timer"
-			:config="config"
-		>
+		<dashboard-component-toolbar :config="config">
 			<template #options="{ data }">
 				<v-row>
 					<v-col>
@@ -91,9 +88,7 @@ export default {
 		stoppedDuration: 0,
 		round: 1,
 		countdownTimer: 3,
-		currentPeriod: 'Work',
-		selectedInterval: '',
-		presetIntervals: ['9Round', 'EMOM', 'TABATA']
+		currentPeriod: 'Work'
 	}),
 	methods: {
 		startTimer() {
@@ -141,12 +136,12 @@ export default {
 			const sec = String(timeElapsed.getUTCSeconds()).padStart(2, '0');
 			const ms = String(timeElapsed.getUTCMilliseconds()).padStart(3, '0');
 
-			if (this.restTime && this.currentPeriod === 'Work' && timeElapsedMs > this.workTime*1000) {
+			if (this.config.restTime && this.currentPeriod === 'Work' && timeElapsedMs > this.config.workTime*1000) {
 				this.currentPeriod = 'Rest';
 				this.restSound.play();
 				this.resetTimer();
 				this.startTimer();
-			} else if (this.workTime && this.currentPeriod === 'Rest' && timeElapsedMs > this.restTime*1000) {
+			} else if (this.config.workTime && this.currentPeriod === 'Rest' && timeElapsedMs > this.config.restTime*1000) {
 				this.currentPeriod = 'Work';
 				this.workSound.play();
 				this.round++;
@@ -154,7 +149,7 @@ export default {
 				this.startTimer();
 			}
 
-			if (this.round > this.numberOfRounds) {
+			if (this.round > this.config.numberOfRounds) {
 				this.currentPeriod = 'Done';
 				return this.resetRound();
 			}
@@ -169,22 +164,6 @@ export default {
 				this.timerInterval = setInterval(this.clockRunning.bind(this), 10);
 				this.isRunning = true;
 				this.currentPeriod = 'Work';
-			}
-		},
-		setPresetInterval(preset) {
-			console.log('preset', preset);
-			if (preset === 'TABATA') {
-				this.config.numberOfRounds = 8;
-				this.config.workTime = 20;
-				this.config.restTime = 10;
-			} else if (preset === 'EMOM') {
-				this.config.numberOfRounds = 10;
-				this.config.workTime = 60;
-				this.config.restTime = 0;
-			} else if (preset === '9Round') {
-				this.config.numberOfRounds = 9;
-				this.config.workTime = 180;
-				this.config.restTime = 30;
 			}
 		}
 	}

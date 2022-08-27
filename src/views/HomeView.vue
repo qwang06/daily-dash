@@ -2,9 +2,7 @@
 	<v-container>
 		<v-row>
 			<draggable tag="div" class="col" v-model="dashboardComponents">
-				<transition-group>
-					<dashboard-component v-for="config in dashboardComponents" :key="config.name" :config="config" />
-				</transition-group>
+				<dashboard-component v-for="config in dashboardComponents" :key="config.name" :config="config" />
 			</draggable>
 		</v-row>
 		<v-dialog v-model="addComponentDialog" width="500" persistent>
@@ -39,7 +37,7 @@
 										<v-checkbox :input-value="active"></v-checkbox>
 									</v-list-item-action>
 									<v-list-item-content>
-										<v-list-item-title>{{item.type}}</v-list-item-title>
+										<v-list-item-title>{{item.title}}</v-list-item-title>
 										<v-list-item-subtitle>{{item.description}}</v-list-item-subtitle>
 									</v-list-item-content>
 								</template>
@@ -59,24 +57,32 @@
 
 <script>
 import DashboardComponent from '@/components/DashboardComponent';
-import RssFeed from '@/components/RssFeed';
 import draggable from 'vuedraggable';
 export default {
 	name: 'Home',
 	components: {
 		DashboardComponent,
-		RssFeed,
 		draggable
 	},
 	data() {
 		return {
 			addComponentDialog: false,
 			dashboardComponentTypes: [{
-				type: 'Interval Timer',
+				type: 'IntervalTimer',
+				title: 'Interval Timer',
 				description: 'Timer with customizable rounds, rest time, and work time.'
 			}, {
-				type: 'RSS Feed',
+				type: 'RssFeed',
+				title: 'RSS Feed',
 				description: 'Fetch RSS Feed from given URL.'
+			}, {
+				type: 'Notepad',
+				title: 'Notepad',
+				description: 'Generic notepad.'
+			}, {
+				type: 'DaysCounter',
+				title: 'Days Counter',
+				description: 'Count days towards a certain date.'
 			}],
 			dashboardComponentTypesSelected: []
 		}
@@ -104,13 +110,13 @@ export default {
 			selectedComponentTypes.forEach(componentType => {
 				this.dashboardComponents.push({
 					type: componentType.type,
+					title: componentType.title,
 					name: componentType.type + ' ' + (this.dashboardComponents.length+1)
 				});
 			});
 			this.addComponentDialog = false;
+			this.dashboardComponentTypesSelected = [];
 		}
-	},
-	mounted() {
 	}
 }
 </script>

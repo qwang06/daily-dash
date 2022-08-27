@@ -1,16 +1,20 @@
 <template>
 	<vue-resizable
+		class="mb-3"
 		width="auto"
 		:active="['r', 'l']"
 		:disableAttributes="['t', 'l', 'h']"
 	>
 		<v-card>
-			<interval-timer v-if="config?.type === 'Interval Timer'" :config="config" />
+			<component :is="config.type" :config="config"></component>
 		</v-card>
 	</vue-resizable>
 </template>
 <script>
 import IntervalTimer from '@/components/IntervalTimer';
+import RssFeed from '@/components/RssFeed';
+import Notepad from '@/components/Notepad';
+import DaysCounter from '@/components/DaysCounter';
 import VueResizable from 'vue-resizable'; 
 	
 export default {
@@ -20,14 +24,10 @@ export default {
 	},
 	components: {
 		IntervalTimer,
+		RssFeed,
+		Notepad,
+		DaysCounter,
 		VueResizable
-	},
-	data() {
-		return {
-
-		}
-	},
-	methods: {
 	}
 }
 </script>

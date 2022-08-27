@@ -1,10 +1,11 @@
 <template>
 	<div>
 		<v-toolbar class="drag-cursor" color="primary" dark>
-			<v-card-title>{{config.type}}</v-card-title>
+			<v-card-title>{{config.title}} - {{config.name}}</v-card-title>
 			<v-spacer />
 			<v-btn text color="success" @click="updateDashboardComponents">Save</v-btn>
 			<v-btn text color="error" @click="deleteDashboardComponent">Delete</v-btn>
+			<v-btn text color="info" @click="test">test</v-btn>
 			<v-btn
 				icon
 				@click="showOptions = !showOptions"
@@ -13,10 +14,10 @@
 			</v-btn>
 		</v-toolbar>
 		<v-expand-transition>
-			<div class="pa-4" v-show="showOptions">
+			<div class="px-4 pt-4" v-show="showOptions">
 				<v-row>
 					<v-col>
-						<v-text-field v-model="dashboardName" label="Dashboard Name"></v-text-field>
+						<v-text-field v-model="dashboardName" label="Dashboard Name" clearable></v-text-field>
 						<slot name="options" :data="optionsData" />
 					</v-col>
 				</v-row>
@@ -33,17 +34,23 @@ export default {
 	},
 	data() {
 		return {
-			showOptions: true,
+			showOptions: this.config?.showOptions == undefined ? true : this.config.showOptions,
 			dashboardName: this.config?.name || '',
-			optionsData: {
-				...this.config
-			}
+			optionsData: { ...this.config }
+		}
+	},
+	watch: {
+		optionsData: {
+			handler(newValue) {
+				Object.assign(this.config, newValue);
+			},
+			deep: true
 		}
 	},
 	methods: {
 		updateDashboardComponents() {
-			Object.assign(this.config, this.optionsData);
 			this.config.name = this.dashboardName;
+			this.config.showOptions = this.showOptions;
 			this.$store.dispatch('app/updateUserPrefs', {
 				callback: (err, response) => {
 					if (!err) {
@@ -64,6 +71,10 @@ export default {
 					}
 				}
 			});
+		},
+		test() {
+			console.log('this.optionsData', JSON.stringify(this.optionsData, null, 2));
+			console.log(JSON.stringify(this.$store.state?.app?.userPrefs, null, 2));
 		}
 	}
 }
