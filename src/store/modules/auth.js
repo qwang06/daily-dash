@@ -88,8 +88,8 @@ const actions = {
 				store.dispatch('app/applyUserPrefs', response.data.user.userPrefs);
 				commit('setUser', response.data.user);
 				commit('setIsAuthenticated', true);
-				console.log('response.data.user.userPrefs.googleCode', response.data.user.userPrefs.googleCode);
-				commit('setIsGoogleAuthenticated', !!response.data.user.userPrefs.googleCode);
+				console.log('response.data.user.userPrefs.googleTokens', response.data.user.userPrefs.googleTokens);
+				commit('setIsGoogleAuthenticated', !!response.data.user.userPrefs.googleTokens);
 				return callback();
 			} else {
 				return callback(err || new Error('Unable to authenticate user.'));

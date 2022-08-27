@@ -26,7 +26,7 @@
 				</v-card-title>
 				<v-card-text>
 					<v-list>
-					    <v-list-item-group
+						<v-list-item-group
 							v-model="dashboardComponentTypesSelected"
 							multiple
 							active-class=""

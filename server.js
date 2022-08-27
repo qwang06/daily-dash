@@ -43,6 +43,10 @@ const corsWhitelist = (origin, cb) => {
 	}
 };
 
+const errorResponse = (errMsg, res, statusCode=400) => {
+	return res.status(statusCode).json({ success: false, message: errMsg });
+}
+
 const createGoogleOAuthClient = () => {
 	const redirectURL = `http://${config.host}:${port}/google/calendar/redirect`;
 	const oauth2Client = new google.auth.OAuth2(config.google.clientID, config.google.clientSecret, redirectURL);
@@ -73,6 +77,55 @@ const refreshGoogleAccessToken = (client, done) => {
 			return done(null, response);
 		})
 		.catch(done);
+}
+
+const initGoogleCalendar = (req, done) => {
+	const userPrefs = req.session?.user?.userPrefs || {};
+	if (!userPrefs.googleTokens?.refresh_token) return done('Please authenticate with Google first.');
+	const googleOAuthClient = createGoogleOAuthClient();
+	const user = new User(req.session.user);
+	let tokenRefreshed = false,
+		calendar;
+	googleOAuthClient.setCredentials(userPrefs.googleTokens);
+	series()
+		.first(cb => {
+			if (new Date() > new Date(userPrefs.googleTokens.expiry_date)) {
+				console.log('refreshing token');
+				refreshGoogleAccessToken(googleOAuthClient, (err, response) => {
+					if (err) return cb(err);
+					userPrefs.googleTokens = response.credentials;
+					req.session.user.userPrefs = userPrefs;
+					tokenRefreshed = true;
+					return cb();
+				});
+			} else {
+				return cb();
+			}
+		})
+		.next(cb => {
+			if (tokenRefreshed) {
+				user.updateUserPrefs(userPrefs, cb);
+			} else {
+				return cb();
+			}
+		})
+		.next(cb => {
+			try {
+				calendar = google.calendar({
+					version: 'v3',
+					auth: googleOAuthClient
+				});
+				return cb();
+			} catch (err) {
+				return cb(err);
+			}
+		})
+		.end(err => {
+			if (err) {
+				return done(err);
+			}
+			return done(null, calendar)
+		})
 }
 
 db.init(err => {
@@ -110,7 +163,7 @@ db.init(err => {
 			password: req.body.password
 		});
 		newUser.create(err => {
-			if (err) return res.status(400).json({ success: false, message: err.toString() });
+			if (err) return errorResponse(err.toString(), res);
 			req.session.user = newUser;
 			return res.json({ success: true });
 		});
@@ -124,7 +177,7 @@ db.init(err => {
 		loginUser.authenticate((err, user) => {
 			if (err) {
 				console.error('User login error', err);
-				return res.status(400).json({ success: false, message: err.toString() });
+				return errorResponse(err.toString(), res);
 			}
 			req.session.user = user;
 			console.log('user', user);
@@ -151,7 +204,7 @@ db.init(err => {
 				return res.json(response);
 			})
 			.catch(err => {
-				return res.status(400).json({ success: false, message: err.toString() });
+				return errorResponse(err.toString(), res);
 			});
 	});
 
@@ -159,7 +212,7 @@ db.init(err => {
 		const user = new User(req.session.user);
 		user.updateUserPrefs(req.body, (err, results) => {
 			if (err) {
-				return res.status(400).json({ success: false, message: err.toString() });
+				return errorResponse(err.toString(), res);
 			} else {
 				req.session.user = user;
 				return res.json({ success: true, user });
@@ -172,13 +225,13 @@ db.init(err => {
 			const url = createGoogleAuthURL();
 			return res.json({ success: true, url });
 		} catch (err) {
-			return res.status(400).json({ success: false, message: err.toString() });
+			return errorResponse(err.toString(), res);
 		}
 	});
 
 	app.get('/google/calendar/redirect', (req, res) => {
 		if (!req?.query?.code) {
-			return res.status(400).json({ success: false, message: 'Failed to get Google Authentication.' });
+			return errorResponse('Failed to get Google Authentication.', res);
 		}
 		const user = new User(req.session.user);
 		const userPrefs = req.session?.user?.userPrefs || {};
@@ -186,7 +239,7 @@ db.init(err => {
 			userPrefs.googleTokens = response.tokens;
 			user.updateUserPrefs(userPrefs, (err, results) => {
 				if (err) {
-					return res.status(400).json({ success: false, message: err.toString() });
+					return errorResponse(err.toString(), res);
 				} else {
 					return res.send('<script>window.close();</script >');
 				}
@@ -194,45 +247,42 @@ db.init(err => {
 		});
 	});
 
-	app.post('/google/calendar/add', (req, res) => {
-		const userPrefs = req.session?.user?.userPrefs || {};
-		console.log('userPrefs', userPrefs);
-		if (!userPrefs.googleTokens?.refresh_token) return res.status(400).json({ success: false, message: 'Please authenticate with Google first.' });
-		const googleOAuthClient = createGoogleOAuthClient();
-		let accessToken;
-		googleOAuthClient.setCredentials(userPrefs.googleTokens);
-		series()
-			.first(cb => {
-				if (new Date() > new Date(userPrefs.googleTokens.expiry_date)) {
-					console.log('refreshing');
-					refreshGoogleAccessToken(googleOAuthClient, (err, response) => {
-						if (err) return cb(err);
-						userPrefs.googleTokens = response.tokens;
-						accessToken = response.tokens.access_token;
-						return cb();
-					});
-				} else {
-					accessToken = userPrefs.googleTokens.access_token;
-					return cb();
-				}
-			})
-			.next(cb => {
-				const calendar = google.calendar({
-					version: 'v3',
-					auth: googleOAuthClient
-				});
-				calendar.calendarList.list((err, response) => {
-					if (err) return cb(err);
-					console.log('response', JSON.stringify(response.data, null, 2));
-					return cb();
-				});
-			})
-			.end(err => {
+	app.get('/google/calendar/list', (req, res) => {
+		initGoogleCalendar(req, (err, calendar) => {
+			if (err) {
+				return errorResponse(err.toString(), res);
+			}
+			calendar.calendarList.list((err, response) => {
 				if (err) {
-					return res.status(400).json({ success: false, message: err.toString() });
+					return errorResponse(err.toString(), res);
 				}
-				return res.json({ success: true, message: userPrefs.googleTokens.scope });
-			})
+				return res.json({ success: true, calendarList: response.data.items });
+			});
+		});
+	});
+
+	app.post('/google/calendar/add', (req, res) => {
+		console.log('req.body', req.body);
+		const options = {
+			calendarId: req.body.calendarId,
+			resource: {
+				summary: req.body.summary,
+				start: { dateTime: new Date(req.body.date) },
+				end: { dateTime: new Date(req.body.date) }
+			}
+		}
+		initGoogleCalendar(req, (err, calendar) => {
+			if (err) {
+				return errorResponse(err.toString(), res);
+			}
+			calendar.events.insert(options, (err, response) => {
+				if (err) {
+					return errorResponse(err.toString(), res);
+				}
+				console.log('response', response);
+				return res.json({ success: true});
+			});
+		});
 	});
 
 	app.listen(port);

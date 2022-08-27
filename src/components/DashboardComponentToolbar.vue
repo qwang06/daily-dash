@@ -5,7 +5,6 @@
 			<v-spacer />
 			<v-btn text color="success" @click="updateDashboardComponents">Save</v-btn>
 			<v-btn text color="error" @click="deleteDashboardComponent">Delete</v-btn>
-			<v-btn text color="info" @click="test">test</v-btn>
 			<v-btn
 				icon
 				@click="showOptions = !showOptions"
@@ -55,7 +54,6 @@ export default {
 				callback: (err, response) => {
 					if (!err) {
 						this.$store.dispatch('app/applySuccessState', 'Dashboards saved');
-						console.log(JSON.stringify(this.$store.state?.app?.userPrefs, null, 2));
 					}
 				}
 			});
@@ -71,10 +69,6 @@ export default {
 					}
 				}
 			});
-		},
-		test() {
-			console.log('this.optionsData', JSON.stringify(this.optionsData, null, 2));
-			console.log(JSON.stringify(this.$store.state?.app?.userPrefs, null, 2));
 		}
 	}
 }
